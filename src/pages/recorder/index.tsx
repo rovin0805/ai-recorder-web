@@ -5,7 +5,7 @@ import useRecorder from "@/hooks/useRecorder";
 import useToast from "@/hooks/useToastMsg";
 import { formatTime } from "@/utils/formatStr";
 
-export default function Recorder() {
+export default function RecorderPage() {
   const {
     micStatus,
     audioUrl,

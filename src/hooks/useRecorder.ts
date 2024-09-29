@@ -1,7 +1,11 @@
 import { useRef, useState } from "react";
 import useTimer from "./useTimer";
+import { fetchTranscription } from "@/api/transcription";
+import { useDataContext } from "@/contexts/script";
 
 type MicStatus = "idle" | "recording" | "paused";
+
+const FILE_EXT = "webm";
 
 const useRecorder = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -19,10 +23,27 @@ const useRecorder = () => {
     setMicStatus("recording");
   };
 
+  const { create } = useDataContext();
+  const handleScript = async (url: string) => {
+    const res = await fetchTranscription({ url, ext: FILE_EXT });
+    if (res) {
+      create({
+        id: new Date().toISOString(),
+        text: res.transcription.text,
+        scripts: res.transcription.segments.map((segment) => ({
+          start: segment.start,
+          end: segment.end,
+          text: segment.text.trim(),
+        })),
+      });
+    }
+  };
+
   const onStopRecording = (url: string) => {
     setAudioUrl(url);
     stopTimer();
     setMicStatus("idle");
+    handleScript(url);
   };
 
   const onPressRecord = () => {
@@ -33,7 +54,7 @@ const useRecorder = () => {
       })
       .then((stream) => {
         const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: "audio/webm",
+          mimeType: `audio/${FILE_EXT}`,
         });
 
         mediaRecorderRef.current = mediaRecorder;
