@@ -1,0 +1,134 @@
+import { useRef, useState } from "react";
+import useTimer from "./useTimer";
+
+type MicStatus = "idle" | "recording" | "paused";
+
+const useRecorder = () => {
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunkRef = useRef<Blob[]>([]);
+
+  const [micStatus, setMicStatus] = useState<MicStatus>("idle");
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+  const { timeInSec, setTimeInSec, startTimer, stopTimer } = useTimer();
+
+  const onStartRecording = () => {
+    setTimeInSec(0);
+    setAudioUrl(null);
+    startTimer();
+    setMicStatus("recording");
+  };
+
+  const onStopRecording = (url: string) => {
+    setAudioUrl(url);
+    stopTimer();
+    setMicStatus("idle");
+  };
+
+  const onPressRecord = () => {
+    window.navigator.mediaDevices
+      .getUserMedia({
+        audio: true,
+        video: false,
+      })
+      .then((stream) => {
+        const mediaRecorder = new MediaRecorder(stream, {
+          mimeType: "audio/webm",
+        });
+
+        mediaRecorderRef.current = mediaRecorder;
+
+        // mediaRecorder.start = () => {
+        //   console.log(mediaRecorder.state);
+        //   onStartRecording();
+        // };
+
+        mediaRecorder.ondataavailable = (event) => {
+          chunkRef.current.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunkRef.current, {
+            type: chunkRef.current[0].type,
+          });
+          const url = URL.createObjectURL(blob);
+          chunkRef.current = [];
+          onStopRecording(url);
+          stream.getTracks().forEach((track) => track.stop());
+        };
+
+        /**
+         * mediaRecorder.start()는 녹음을 시작하는 내장 메서드입니다.
+         * 이를 오버라이드하면서 기본 녹음 동작이 실행되지 않았습니다.
+         */
+        mediaRecorder.start();
+        onStartRecording();
+        setMicStatus("recording");
+      });
+  };
+
+  const onPressPause = () => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === "recording"
+    ) {
+      mediaRecorderRef.current.pause();
+    }
+    setMicStatus("paused");
+    stopTimer();
+  };
+
+  const onPressResume = () => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === "paused"
+    ) {
+      mediaRecorderRef.current.resume();
+    }
+    setMicStatus("recording");
+    startTimer();
+  };
+
+  const onPressSave = () => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      mediaRecorderRef.current.stop();
+    }
+    setMicStatus("idle");
+    stopTimer();
+  };
+
+  const onClickMic = () => {
+    switch (micStatus) {
+      case "idle": {
+        onPressRecord();
+        break;
+      }
+      case "recording": {
+        onPressPause();
+        break;
+      }
+      case "paused": {
+        onPressResume();
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  };
+
+  return {
+    micStatus,
+    audioUrl,
+    timeInSec,
+    onClickMic,
+    onPressPause,
+    onPressResume,
+    onPressSave,
+  };
+};
+
+export default useRecorder;

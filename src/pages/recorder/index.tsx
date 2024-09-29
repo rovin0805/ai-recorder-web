@@ -1,16 +1,22 @@
-import { useState } from "react";
 import Header from "@/components/Header";
 import Button from "@/components/Button";
 import ToastMsg from "@/components/ToastMsg";
-
-type MicStatus = "idle" | "recording" | "paused";
+import useRecorder from "@/hooks/useRecorder";
+import useToast from "@/hooks/useToastMsg";
+import { formatTime } from "@/utils/formatStr";
 
 export default function Recorder() {
-  const [micStatus, setMicStatus] = useState<MicStatus>("idle");
-  const [timeInSec, setTimeInSec] = useState(0);
-  const [isToastVisible, setIsToastVisible] = useState(false);
+  const {
+    micStatus,
+    audioUrl,
+    timeInSec,
+    onClickMic,
+    onPressPause,
+    onPressResume,
+    onPressSave,
+  } = useRecorder();
 
-  const onClickMic = () => {};
+  const { isToastVisible, showToastMsg } = useToast();
 
   const renderMicIcon = () => {
     switch (micStatus) {
@@ -23,8 +29,8 @@ export default function Recorder() {
       case "idle": {
         return (
           <span
-            className={`material-icons text-${
-              micStatus === "idle" ? "white" : "green-400"
+            className={`material-icons ${
+              micStatus === "idle" ? "text-white" : "text-green-400"
             } text-[70px]`}
           >
             mic
@@ -39,18 +45,6 @@ export default function Recorder() {
     }
   };
 
-  const formatTime = (time: number) => {
-    const min = Math.floor(time / 60);
-    const sec = time % 60;
-    return `${min < 10 ? `0${min}` : min}:${sec < 10 ? `0${sec}` : sec}`;
-  };
-
-  const onPressPause = () => {
-    setMicStatus("paused");
-  };
-
-  const onPressSave = () => {};
-
   return (
     <div className="h-screen bg-white flex flex-col">
       <Header title="녹음하기" />
@@ -62,6 +56,12 @@ export default function Recorder() {
         >
           {renderMicIcon()}
         </button>
+
+        {audioUrl && (
+          <audio controls className="mt-3">
+            <source src={audioUrl} type="audio/webm" />
+          </audio>
+        )}
 
         <span className="text-xl my-8">{formatTime(timeInSec)}</span>
 
@@ -75,11 +75,23 @@ export default function Recorder() {
             />
           )}
 
+          {micStatus === "paused" && (
+            <Button
+              iconName="play_arrow"
+              text="계속하기"
+              onClick={onPressResume}
+              buttonStyle="mb-4"
+            />
+          )}
+
           {micStatus !== "idle" && (
             <Button
               iconName="check"
               text="저장하기"
-              onClick={onPressSave}
+              onClick={() => {
+                onPressSave();
+                showToastMsg();
+              }}
               buttonStyle="bg-green-400"
             />
           )}
