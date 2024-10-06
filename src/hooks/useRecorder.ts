@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useRouter } from "next/router";
 import useTimer from "./useTimer";
 import { fetchTranscription } from "@/api/transcription";
 import { useDataContext } from "@/contexts/script";
@@ -24,11 +25,13 @@ const useRecorder = () => {
   };
 
   const { create } = useDataContext();
+  const router = useRouter();
   const handleScript = async (url: string) => {
     const res = await fetchTranscription({ url, ext: FILE_EXT });
     if (res) {
+      const id = `${Date.now()}`;
       create({
-        id: new Date().toISOString(),
+        id,
         text: res.transcription.text,
         scripts: res.transcription.segments.map((segment) => ({
           start: segment.start,
@@ -36,6 +39,7 @@ const useRecorder = () => {
           text: segment.text.trim(),
         })),
       });
+      router.push(`/recorder/${id}`);
     }
   };
 
