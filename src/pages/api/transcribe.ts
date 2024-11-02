@@ -1,17 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import formidable from "formidable";
-import OpenAI from "openai";
 import fs from "fs";
+import openai from "@/utils/openAi";
 
 export const config = {
   api: {
     bodyParser: false,
   },
 };
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_KEY || "",
-});
 
 /**
  * Input : audio

@@ -4,10 +4,8 @@ import colors from "@/styles/colors";
 const Summary = ({ text, loading }: { text?: string; loading?: boolean }) => {
   return (
     <div className="h-full pt-[22px] px-[20px]">
-      {" "}
-      {loading ? (
+      {loading || !text ? (
         <div className="flex items-center justify-center h-full w-full">
-          {" "}
           <TailSpin color={colors.green} width={50} height={50} />{" "}
         </div>
       ) : (

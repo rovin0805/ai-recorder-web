@@ -1,13 +1,24 @@
+import colors from "@/styles/colors";
 import { formatTime } from "@/utils/formatStr";
 
 interface ScriptProps {
   scripts: { start: number; end: number; text: string }[];
-  onPressSummarize?: () => void;
+  onPressSummarize: () => void;
 }
 
 const Script = ({ scripts, onPressSummarize }: ScriptProps) => {
   return (
     <div className="flex flex-col px-[16px] py-[24px]">
+      <button
+        className={`relative bg-[${colors.green}] mb-[18px] flex justify-center items-center py-[13px] rounded-[6px] text-[16px] font-[700] text-[#FFFFFF]`}
+        onClick={onPressSummarize}
+      >
+        요약하기
+        <span className="material-icons text-white text-[24px] absolute right-[17px]">
+          east
+        </span>
+      </button>
+
       <div className="flex flex-col gap-[18px]">
         {scripts.map((script, index) => {
           return (
